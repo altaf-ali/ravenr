@@ -32,9 +32,10 @@ sentry_client <- function(dsn, user = NULL, version = NULL) {
 
   url$username <- NULL
   url$password <- NULL
-  url$path <- file.path("api", url$path, "store/")
+  url$path <- file.path("api", url$path, "store")
 
   client$url <- httr::build_url(url)
+  client$url <- paste0(client$url, "/")
 
   return(client)
 }

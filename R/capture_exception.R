@@ -64,25 +64,14 @@ capture_exception.sentry <- function(object, exception, extra = NULL) {
     )
   )
 
-  print("---- exception_context ----")
-  print(exception_context)
-
   headers <- paste("Sentry", paste(sapply(names(object$auth), function(key) {
     paste0(key, "=", object$auth[[key]])
   }, USE.NAMES = FALSE), collapse = ", "))
-
-  print("---- headers ----")
-  print(headers)
-
-  print("---- url ----")
-  print(object$url)
 
   response <- httr::POST(url = object$url,
                          httr::add_headers('X-Sentry-Auth' = headers),
                          encode = "json",
                          body = exception_context)
-
-  print(response)
 
   return(response)
 }

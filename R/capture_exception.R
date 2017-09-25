@@ -41,7 +41,7 @@ capture_exception.sentry <- function(object, exception, extra = NULL) {
     packages = packages
   )
 
-  event_id <- paste(sample(c(0:9, letters[1:6]), 32, replace = TRUE), collapse = "")
+  event_id <- generate_event_id()
 
   exception_context <- list(
     event_id = event_id,
@@ -56,8 +56,11 @@ capture_exception.sentry <- function(object, exception, extra = NULL) {
       )
     ),
     extra = c(required_attributes, extra),
+
     tags = list(
-      event_url = sprintf("http://altaf-ali.github.io/crow/events%s", event_id)
+      user.name = user$name,
+      user.email = user$email,
+      event.url = build_event_url(event_id)
     )
   )
 
@@ -72,3 +75,24 @@ capture_exception.sentry <- function(object, exception, extra = NULL) {
 
   return(response)
 }
+
+# ---------------------------------------------------------------------
+generate_event_id <- function() {
+  paste(sample(c(0:9, letters[1:6]), 32, replace = TRUE), collapse = "")
+}
+
+# ---------------------------------------------------------------------
+build_event_url <- function(event_id) {
+  url <- structure(
+    list(
+      scheme = "https",
+      hostname = "altaf-ali.github.io",
+      path = file.path("sentry/events", event_id)
+    ),
+    class = "url"
+  )
+
+  httr::build_url(url)
+}
+
+

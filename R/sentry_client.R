@@ -18,7 +18,7 @@ sentry_client <- function(dsn, user = NULL, version = NULL) {
       dsn = dsn,
       auth = list(
         sentry_version = version,
-        sentry_client = paste0("ravenr", getNamespaceVersion("ravenr")),
+        sentry_client = paste("ravenr", getNamespaceVersion("ravenr"), sep="/"),
         sentry_timestamp = as.integer(Sys.time()),
         sentry_key = url$username,
         sentry_secret = url$password
@@ -32,9 +32,10 @@ sentry_client <- function(dsn, user = NULL, version = NULL) {
 
   url$username <- NULL
   url$password <- NULL
-  url$path <- file.path("api", url$path, "store/")
+  url$path <- file.path("api", url$path, "store")
 
   client$url <- httr::build_url(url)
+  client$url <- paste0(client$url, "/")
 
   return(client)
 }

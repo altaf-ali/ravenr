@@ -4,12 +4,12 @@
 \alias{capture_exception}
 \title{Capture Exception}
 \usage{
-capture_exception(object, e, extra)
+capture_exception(object, exception, extra)
 }
 \arguments{
 \item{object}{A Sentry client}
 
-\item{e}{exception to catch}
+\item{exception}{exception to catch}
 
 \item{extra}{set extra context}
 }

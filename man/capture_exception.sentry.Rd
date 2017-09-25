@@ -11,7 +11,7 @@
 
 \item{exception}{exception to catch}
 
-\item{extra}{extra data to send}
+\item{extra}{set extra context}
 }
 \description{
 \code{capture_exception.sentry} Captures an exception and sends it to Sentry

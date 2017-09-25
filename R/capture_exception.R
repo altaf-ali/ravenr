@@ -3,11 +3,11 @@
 #' \code{capture_exception} Captures an exception and sends it to Sentry
 #'
 #' @param object A Sentry client
-#' @param e exception to catch
+#' @param exception exception to catch
 #' @param extra set extra context
 #'
 #' @export
-capture_exception <- function(object, e, extra) {
+capture_exception <- function(object, exception, extra) {
   UseMethod("capture_exception", object)
 }
 
@@ -17,7 +17,7 @@ capture_exception <- function(object, e, extra) {
 #'
 #' @param object A Sentry client
 #' @param exception exception to catch
-#' @param extra extra data to send
+#' @param extra set extra context
 #'
 #' @export
 capture_exception.sentry <- function(object, exception, extra = NULL) {

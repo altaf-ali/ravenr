@@ -1,0 +1,5 @@
+language: r
+apt_packages:
+  - libcurl4-openssl-dev
+  
+  

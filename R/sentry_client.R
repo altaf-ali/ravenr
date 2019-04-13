@@ -22,7 +22,8 @@ sentry_client <- function(dsn, user = NULL, version = NULL) {
         sentry_timestamp = as.integer(Sys.time()),
         sentry_key = url$username,
         sentry_secret = url$password
-      )
+      ),
+      tags = list()
     ),
     class = "sentry"
   )

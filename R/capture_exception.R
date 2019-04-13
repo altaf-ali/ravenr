@@ -49,11 +49,7 @@ capture_exception.sentry <- function(object, exception, extra = NULL) {
     message = exception$message,
     extra = c(required_attributes, extra),
 
-    tags = list(
-      user.name = user$name,
-      user.email = user$email,
-      event.url = build_event_url(event_id)
-    )
+    tags = object$tags
   )
 
   headers <- paste("Sentry", paste(sapply(names(object$auth), function(key) {

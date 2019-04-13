@@ -3,4 +3,4 @@ apt_packages:
   - libcurl4-openssl-dev
   
 script:
-  - R -e devtools::test
+  - R -e devtools::test()

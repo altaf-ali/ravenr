@@ -47,14 +47,6 @@ capture_exception.sentry <- function(object, exception, extra = NULL) {
     event_id = event_id,
     user = user,
     message = exception$message,
-    exception = list(
-      values = list(
-        list(
-          type = exception$type,
-          value = exception$value
-        )
-      )
-    ),
     extra = c(required_attributes, extra),
 
     tags = list(

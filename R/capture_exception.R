@@ -5,9 +5,11 @@
 #' @param object A Sentry client
 #' @param exception exception to catch
 #' @param extra set extra context
+#' @param level set level, warning or error for example
+#' @param tags named list of tags
 #'
 #' @export
-capture_exception <- function(object, exception, extra) {
+capture_exception <- function(object, exception, extra, level, tags) {
   UseMethod("capture_exception", object)
 }
 
@@ -18,9 +20,11 @@ capture_exception <- function(object, exception, extra) {
 #' @param object A Sentry client
 #' @param exception exception to catch
 #' @param extra set extra context
+#' @param level set level, warning or error for example
+#' @param tags named list of tags
 #'
 #' @export
-capture_exception.sentry <- function(object, exception, extra = NULL) {
+capture_exception.sentry <- function(object, exception, extra = NULL, level = "error", tags = NULL) {
 
   session_info <- devtools::session_info()
 
@@ -33,6 +37,11 @@ capture_exception.sentry <- function(object, exception, extra = NULL) {
   user <- c(
     object$user,
     list(sysinfo = as.list(Sys.info()))
+  )
+
+  tags <- c(
+    object$tags,
+    tags
   )
 
   required_attributes <- list(
@@ -48,8 +57,8 @@ capture_exception.sentry <- function(object, exception, extra = NULL) {
     user = user,
     message = exception$message,
     extra = c(required_attributes, extra),
-
-    tags = object$tags
+    tags = tags,
+    level = level
   )
 
   headers <- paste("Sentry", paste(sapply(names(object$auth), function(key) {
@@ -68,19 +77,3 @@ capture_exception.sentry <- function(object, exception, extra = NULL) {
 generate_event_id <- function() {
   paste(sample(c(0:9, letters[1:6]), 32, replace = TRUE), collapse = "")
 }
-
-# ---------------------------------------------------------------------
-build_event_url <- function(event_id) {
-  url <- structure(
-    list(
-      scheme = "https",
-      hostname = "altaf-ali.github.io",
-      path = file.path("sentry/events", event_id)
-    ),
-    class = "url"
-  )
-
-  httr::build_url(url)
-}
-
-

@@ -7,9 +7,10 @@
 #' @param extra set extra context
 #' @param level set level, warning or error for example
 #' @param tags named list of tags
+#' @param use_session_info whether to send platform and package list, takes up to 1s or more
 #'
 #' @export
-capture_exception <- function(object, exception, extra, level, tags) {
+capture_exception <- function(object, exception, extra, level, tags, use_session_info) {
   UseMethod("capture_exception", object)
 }
 
@@ -22,17 +23,26 @@ capture_exception <- function(object, exception, extra, level, tags) {
 #' @param extra set extra context
 #' @param level set level, warning or error for example
 #' @param tags named list of tags
+#' @param use_session_info whether to send platform and package list, takes up to 1s or more
 #'
 #' @export
-capture_exception.sentry <- function(object, exception, extra = NULL, level = "error", tags = NULL) {
+capture_exception.sentry <- function(
+  object, exception, extra = NULL, level = "error", tags = NULL, use_session_info = TRUE
+) {
 
-  session_info <- devtools::session_info()
+  required_attributes <- list(
+    timestamp = strftime(Sys.time() , "%Y-%m-%dT%H:%M:%S")
+  )
 
-  platform <- unclass(session_info$platform)
+  if (use_session_info) {
+    session_info <- devtools::session_info()
 
-  packages <- session_info$packages
-  package_info <- paste0(packages$version, " (", packages$date, ") - ", packages$source)
-  packages <- as.list(stats::setNames(package_info, packages$package))
+    required_attributes$platform <- unclass(session_info$platform)
+
+    packages <- session_info$packages
+    package_info <- paste0(packages$version, " (", packages$date, ") - ", packages$source)
+    required_attributes$packages <- as.list(stats::setNames(package_info, packages$package))
+  }
 
   user <- c(
     object$user,
@@ -42,12 +52,6 @@ capture_exception.sentry <- function(object, exception, extra = NULL, level = "e
   tags <- c(
     object$tags,
     tags
-  )
-
-  required_attributes <- list(
-    timestamp = strftime(Sys.time() , "%Y-%m-%dT%H:%M:%S"),
-    platform = platform,
-    packages = packages
   )
 
   event_id <- generate_event_id()
@@ -64,7 +68,6 @@ capture_exception.sentry <- function(object, exception, extra = NULL, level = "e
   headers <- paste("Sentry", paste(sapply(names(object$auth), function(key) {
     paste0(key, "=", object$auth[[key]])
   }, USE.NAMES = FALSE), collapse = ", "))
-
   response <- httr::POST(url = object$url,
                          httr::add_headers('X-Sentry-Auth' = headers),
                          encode = "json",

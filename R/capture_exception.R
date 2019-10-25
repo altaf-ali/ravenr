@@ -7,10 +7,10 @@
 #' @param extra set extra context
 #' @param level set level, warning or error for example
 #' @param tags named list of tags
-#' @param use_session_info whether to send platform and package list, takes up to 1s or more
+#' @param include_session_info whether to send platform and package list, takes up to 1s or more
 #'
 #' @export
-capture_exception <- function(object, exception, extra, level, tags, use_session_info) {
+capture_exception <- function(object, exception, extra, level, tags, include_session_info) {
   UseMethod("capture_exception", object)
 }
 
@@ -23,25 +23,19 @@ capture_exception <- function(object, exception, extra, level, tags, use_session
 #' @param extra set extra context
 #' @param level set level, warning or error for example
 #' @param tags named list of tags
-#' @param use_session_info whether to send platform and package list, takes up to 1s or more
+#' @param include_session_info whether to send platform and package list, takes up to 1s or more
 #'
 #' @export
 capture_exception.sentry <- function(
-  object, exception, extra = NULL, level = "error", tags = NULL, use_session_info = TRUE
+  object, exception, extra = NULL, level = "error", tags = NULL, include_session_info = TRUE
 ) {
 
   required_attributes <- list(
     timestamp = strftime(Sys.time() , "%Y-%m-%dT%H:%M:%S")
   )
 
-  if (use_session_info) {
-    session_info <- devtools::session_info()
-
-    required_attributes$platform <- unclass(session_info$platform)
-
-    packages <- session_info$packages
-    package_info <- paste0(packages$version, " (", packages$date, ") - ", packages$source)
-    required_attributes$packages <- as.list(stats::setNames(package_info, packages$package))
+  if (include_session_info) {
+    required_attributes <- c(required_attributes, get_session_info())
   }
 
   user <- c(

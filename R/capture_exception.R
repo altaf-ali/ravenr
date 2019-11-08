@@ -5,9 +5,12 @@
 #' @param object A Sentry client
 #' @param exception exception to catch
 #' @param extra set extra context
+#' @param level set level, warning or error for example
+#' @param tags named list of tags
+#' @param include_session_info whether to send platform and package list, takes up to 1s or more
 #'
 #' @export
-capture_exception <- function(object, exception, extra) {
+capture_exception <- function(object, exception, extra, level, tags, include_session_info) {
   UseMethod("capture_exception", object)
 }
 
@@ -18,27 +21,31 @@ capture_exception <- function(object, exception, extra) {
 #' @param object A Sentry client
 #' @param exception exception to catch
 #' @param extra set extra context
+#' @param level set level, warning or error for example
+#' @param tags named list of tags
+#' @param include_session_info whether to send platform and package list, takes up to 1s or more
 #'
 #' @export
-capture_exception.sentry <- function(object, exception, extra = NULL) {
+capture_exception.sentry <- function(
+  object, exception, extra = NULL, level = "error", tags = NULL, include_session_info = TRUE
+) {
 
-  session_info <- devtools::session_info()
+  required_attributes <- list(
+    timestamp = strftime(Sys.time() , "%Y-%m-%dT%H:%M:%S")
+  )
 
-  platform <- unclass(session_info$platform)
-
-  packages <- session_info$packages
-  package_info <- paste0(packages$version, " (", packages$date, ") - ", packages$source)
-  packages <- as.list(stats::setNames(package_info, packages$package))
+  if (include_session_info) {
+    required_attributes <- c(required_attributes, get_session_info())
+  }
 
   user <- c(
     object$user,
     list(sysinfo = as.list(Sys.info()))
   )
 
-  required_attributes <- list(
-    timestamp = strftime(Sys.time() , "%Y-%m-%dT%H:%M:%S"),
-    platform = platform,
-    packages = packages
+  tags <- c(
+    object$tags,
+    tags
   )
 
   event_id <- generate_event_id()
@@ -47,27 +54,14 @@ capture_exception.sentry <- function(object, exception, extra = NULL) {
     event_id = event_id,
     user = user,
     message = exception$message,
-    exception = list(
-      values = list(
-        list(
-          type = exception$type,
-          value = exception$value
-        )
-      )
-    ),
     extra = c(required_attributes, extra),
-
-    tags = list(
-      user.name = user$name,
-      user.email = user$email,
-      event.url = build_event_url(event_id)
-    )
+    tags = tags,
+    level = level
   )
 
   headers <- paste("Sentry", paste(sapply(names(object$auth), function(key) {
     paste0(key, "=", object$auth[[key]])
   }, USE.NAMES = FALSE), collapse = ", "))
-
   response <- httr::POST(url = object$url,
                          httr::add_headers('X-Sentry-Auth' = headers),
                          encode = "json",
@@ -80,19 +74,3 @@ capture_exception.sentry <- function(object, exception, extra = NULL) {
 generate_event_id <- function() {
   paste(sample(c(0:9, letters[1:6]), 32, replace = TRUE), collapse = "")
 }
-
-# ---------------------------------------------------------------------
-build_event_url <- function(event_id) {
-  url <- structure(
-    list(
-      scheme = "https",
-      hostname = "altaf-ali.github.io",
-      path = file.path("sentry/events", event_id)
-    ),
-    class = "url"
-  )
-
-  httr::build_url(url)
-}
-
-
